@@ -3,4 +3,6 @@
 templates/
 images/
 examples/
+.ipynb_checkpoints/
 sgr-agent-core
+sgr-agent-core/
