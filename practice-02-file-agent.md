@@ -11,7 +11,7 @@
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -U pip
-pip install sgr-agent-core
+pip install sgr-agent-core openai pydantic
 ```
 
 ---
@@ -19,8 +19,8 @@ pip install sgr-agent-core
 ## 2. Создание папки проекта
 
 ```bash
+mkdir -pv sgr-file-agent/{tools,logs}
 cd sgr-file-agent
-mkdir -p tools logs
 ```
 
 Целевая структура
@@ -48,38 +48,22 @@ sgr-file-agent/
 """Tool for writing files."""
 
 from pathlib import Path
-from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from sgr_agent_core.agent_definition import AgentConfig
 from sgr_agent_core.base_tool import BaseTool
 from sgr_agent_core.models import AgentContext
 
 
-class WriteFileInput(BaseModel):
-    """Input for WriteFileTool."""
-
-    file_path: str = Field(description="Relative path to file")
-    content: str = Field(description="File content")
-    append: bool = Field(default=False, description="Append instead of overwrite")
-
-
 class WriteFileTool(BaseTool):
     """Write utf-8 files inside working directory."""
 
     tool_name = "write_file_tool"
-    reasoning: str
-    file_path: str
-    content: str
-    append: bool = False
-
-    def model_post_init(self, __context: Any) -> None:
-        self.args_model = WriteFileInput(
-            file_path=self.file_path,
-            content=self.content,
-            append=self.append,
-        )
+    reasoning: str = Field(description="Why this file operation is needed")
+    file_path: str = Field(description="Relative path to file")
+    content: str = Field(description="File content")
+    append: bool = Field(default=False, description="Append instead of overwrite")
 
     async def __call__(self, context: AgentContext, config: AgentConfig) -> str:
         """Write file and return short report."""
@@ -117,38 +101,22 @@ class WriteFileTool(BaseTool):
 """Tool for listing directory contents."""
 
 from pathlib import Path
-from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from sgr_agent_core.agent_definition import AgentConfig
 from sgr_agent_core.base_tool import BaseTool
 from sgr_agent_core.models import AgentContext
 
 
-class ListDirInput(BaseModel):
-    """Input for ListDirTool."""
-
-    dir_path: str = Field(default=".", description="Relative path to directory")
-    recursive: bool = Field(default=False, description="Enable recursive walk")
-    include_hidden: bool = Field(default=False, description="Include hidden entries")
-
-
 class ListDirTool(BaseTool):
     """List files and directories in working directory."""
 
     tool_name = "list_dir_tool"
-    reasoning: str
-    dir_path: str = "."
-    recursive: bool = False
-    include_hidden: bool = False
-
-    def model_post_init(self, __context: Any) -> None:
-        self.args_model = ListDirInput(
-            dir_path=self.dir_path,
-            recursive=self.recursive,
-            include_hidden=self.include_hidden,
-        )
+    reasoning: str = Field(description="Why directory listing is needed")
+    dir_path: str = Field(default=".", description="Relative path to directory")
+    recursive: bool = Field(default=False, description="Enable recursive walk")
+    include_hidden: bool = Field(default=False, description="Include hidden entries")
 
     async def __call__(self, context: AgentContext, config: AgentConfig) -> str:
         """List directory entries within working directory boundary."""
@@ -188,41 +156,23 @@ class ListDirTool(BaseTool):
 
 import re
 from pathlib import Path
-from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from sgr_agent_core.agent_definition import AgentConfig
 from sgr_agent_core.base_tool import BaseTool
 from sgr_agent_core.models import AgentContext
 
 
-class GrepInput(BaseModel):
-    """Input for GrepTool."""
-
-    pattern: str = Field(description="Regex pattern")
-    file_glob: str = Field(default="**/*", description="Glob for target files")
-    case_sensitive: bool = Field(default=False, description="Use case-sensitive search")
-    max_matches: int = Field(default=200, ge=1, le=2000, description="Limit total matches")
-
-
 class GrepTool(BaseTool):
     """Search across files in working directory."""
 
     tool_name = "grep_tool"
-    reasoning: str
-    pattern: str
-    file_glob: str = "**/*"
-    case_sensitive: bool = False
-    max_matches: int = 200
-
-    def model_post_init(self, __context: Any) -> None:
-        self.args_model = GrepInput(
-            pattern=self.pattern,
-            file_glob=self.file_glob,
-            case_sensitive=self.case_sensitive,
-            max_matches=self.max_matches,
-        )
+    reasoning: str = Field(description="Why regex search is needed")
+    pattern: str = Field(description="Regex pattern")
+    file_glob: str = Field(default="**/*", description="Glob for target files")
+    case_sensitive: bool = Field(default=False, description="Use case-sensitive search")
+    max_matches: int = Field(default=200, ge=1, le=2000, description="Limit total matches")
 
     async def __call__(self, context: AgentContext, config: AgentConfig) -> str:
         """Find regex matches with file and line references."""
@@ -281,38 +231,22 @@ class GrepTool(BaseTool):
 """Tool for finding files by name."""
 
 from pathlib import Path
-from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from sgr_agent_core.agent_definition import AgentConfig
 from sgr_agent_core.base_tool import BaseTool
 from sgr_agent_core.models import AgentContext
 
 
-class FindInput(BaseModel):
-    """Input for FindTool."""
-
-    pattern: str = Field(description="Glob pattern for file names")
-    dir_path: str = Field(default=".", description="Relative directory to scan")
-    max_results: int = Field(default=200, ge=1, le=5000, description="Result limit")
-
-
 class FindTool(BaseTool):
     """Find files by glob pattern."""
 
     tool_name = "find_tool"
-    reasoning: str
-    pattern: str
-    dir_path: str = "."
-    max_results: int = 200
-
-    def model_post_init(self, __context: Any) -> None:
-        self.args_model = FindInput(
-            pattern=self.pattern,
-            dir_path=self.dir_path,
-            max_results=self.max_results,
-        )
+    reasoning: str = Field(description="Why file discovery is needed")
+    pattern: str = Field(description="Glob pattern for file names")
+    dir_path: str = Field(default=".", description="Relative directory to scan")
+    max_results: int = Field(default=200, ge=1, le=5000, description="Result limit")
 
     async def __call__(self, context: AgentContext, config: AgentConfig) -> str:
         """Find files relative to working directory."""
@@ -388,18 +322,17 @@ from openai import AsyncOpenAI, pydantic_function_tool
 from openai.types.chat import ChatCompletionFunctionToolParam
 
 from sgr_agent_core.agent_definition import AgentConfig
-from sgr_agent_core.agents.sgr_tool_calling_agent import SGRToolCallingAgent
+from sgr_agent_core.agents.tool_calling_agent import ToolCallingAgent
 from sgr_agent_core.tools import (
     BaseTool,
     ClarificationTool,
     FinalAnswerTool,
-    ReasoningTool,
 )
 
 from tools import FindTool, GrepTool, ListDirTool, WriteFileTool
 
 
-class SGRFileAgent(SGRToolCallingAgent):
+class SGRFileAgent(ToolCallingAgent):
     """Agent for local file-system tasks."""
 
     name: str = "sgr_file_agent"
@@ -436,7 +369,6 @@ class SGRFileAgent(SGRToolCallingAgent):
 
         if self._context.iteration >= self.config.execution.max_iterations:
             tools = {
-                ReasoningTool,
                 ListDirTool,
                 FinalAnswerTool,
             }
@@ -451,13 +383,13 @@ class SGRFileAgent(SGRToolCallingAgent):
 
 ## 5. Код конфигурации
 
-### `config.yaml.example`
+### `config.yaml`
 
 ```yaml
 llm:
-  api_key: "your-openai-api-key-here"
-  base_url: "https://api.openai.com/v1"
-  model: "gpt-4.1-mini"
+  api_key: "https://t.me/evilfreelancer"
+  base_url: "https://api.rpa.icu/v1"
+  model: "gpt-oss:120b"
   max_tokens: 8000
   temperature: 0.2
 
@@ -512,13 +444,13 @@ python -c "from tools import WriteFileTool, ListDirTool, GrepTool, FindTool; pri
 ## 7. Запуск API
 
 ```bash
-sgr -c config.yaml
+sgr -c config.yaml --host 127.0.0.1 --port 8015
 ```
 
 Ожидаемая строка в логах
 
 ```text
-Uvicorn running on http://0.0.0.0:8010
+Uvicorn running on http://127.0.0.1:8015
 ```
 
 ---
@@ -528,7 +460,7 @@ Uvicorn running on http://0.0.0.0:8010
 ### 8.1 Список файлов
 
 ```bash
-curl -N -X POST "http://localhost:8010/v1/chat/completions" \
+curl -N -X POST "http://localhost:8015/v1/chat/completions" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "sgr_file_agent",
@@ -542,12 +474,12 @@ curl -N -X POST "http://localhost:8010/v1/chat/completions" \
 ### 8.2 Поиск TODO
 
 ```bash
-curl -N -X POST "http://localhost:8010/v1/chat/completions" \
+curl -N -X POST "http://localhost:8015/v1/chat/completions" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "sgr_file_agent",
     "messages": [
-      {"role": "user", "content": "Найди все TODO и FIXME в markdown и python файлах"}
+      {"role": "user", "content": "Найди все строки с class в python файлах внутри tools"}
     ],
     "stream": true
   }'
@@ -556,12 +488,12 @@ curl -N -X POST "http://localhost:8010/v1/chat/completions" \
 ### 8.3 Поиск файлов по имени
 
 ```bash
-curl -N -X POST "http://localhost:8010/v1/chat/completions" \
+curl -N -X POST "http://localhost:8015/v1/chat/completions" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "sgr_file_agent",
     "messages": [
-      {"role": "user", "content": "Найди все файлы с расширением md"}
+      {"role": "user", "content": "Найди все файлы с расширением py"}
     ],
     "stream": true
   }'
@@ -570,7 +502,7 @@ curl -N -X POST "http://localhost:8010/v1/chat/completions" \
 ### 8.4 Создание файла
 
 ```bash
-curl -N -X POST "http://localhost:8010/v1/chat/completions" \
+curl -N -X POST "http://localhost:8015/v1/chat/completions" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "sgr_file_agent",
