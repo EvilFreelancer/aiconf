@@ -311,48 +311,187 @@ llm:
 
 ![](assets/52.png)
 
-Цель мастер-класса — запустить рабочий Deep Research агент из пакета sgr-agent-core
+Цель практики — запустить рабочий Deep Research агент из пакета sgr-agent-core
 
 ---
 
-## Слайд 9. SGR Agent Core — Мастер-класс
+## SGR Agent Core — Мастер-класс
 
 Перерыв 10-15 минут
 
 ---
 
-## Слайд 10. 6. Практика: Файловый агент
 
-1. Пишем тулы: read, write, grep, glob
-2. Настраиваем YAML-конфигурую
-3. Запуск API-сервера
-4. Выполение cURL-зарпроса
-5. Запуск ACP stdio (задача со*)
-6. Подключение APC к Obsidian (задача со*)
+##  6. Практика: Файловый агент
 
-Что получим -->>
+**СЛЕВА — Пошаговый план:**
 
----
+![](assets/61.png)
 
-## Слайд 11. 7. Langfuse и тесты
+**СПРАВА — Что получим:**
 
-Уровни тестирования: тулы -> агенты -> API
-Langfuse для трассировки шагов модели (просто показать)
+![](assets/62.png)
+
+Цель практики — создать рабочий файловый агент на базе пакета sgr-agent-core
 
 ---
 
-## Слайд 12. 8. Домашнее задание
+##  6.1. Практика: Файловый агент — Тулы
 
-(расписать подробнее задачу)
-1. файловый агент на своём vault с 3+ тестами
-2. SGR ACP интеграция с VS Code
+**Базовые тулы для работы с файлами:**
 
-->>>>
-Что проверить: воспроизводимость экспериментов, метрики Langfuse, Swagger-документация API
+| Тул | Назначение | Параметры |
+|-----|-----------|-----------|
+| `read_file_tool` | Чтение содержимого файла | `file_path`, `offset`, `limit` |
+| `write_file_tool` | Запись/дозапись в файл | `file_path`, `content` |
+| `list_dir_tool` | Список файлов в директории | `dir_path`, `recursive` |
+| `grep_tool` | Поиск по содержимому файла | `pattern`, `file_path` |
+| `find_tool` | Быстрый поиск файлов по имени | `pattern`, `dir_path` |
 
 ---
 
-## Слайд 13. 9. Завершение и Roadmap
+##  6.2. Практика: Файловый агент — Конфиг тулов
+
+```yaml
+tools:
+  # Системные тулы
+  clarification_tool: {}
+  final_answer_tool: {}
+  
+  # Файловые тулы (кастомные)
+  read_file_tool:
+    base_class: "tools.ReadFileTool"
+  write_file_tool:
+    base_class: "tools.WriteFileTool"
+  list_dir_tool:
+    base_class: "tools.ListDirTool"
+  grep_tool:
+    base_class: "tools.GrepTool"
+  find_tool:
+    base_class: "tools.FindTool"
+```
+
+Каждый тул наследуется от `BaseTool` и определяет:
+- Pydantic-модель входных параметров
+- Метод `__call__` с логикой выполнения
+
+---
+
+## 6.4. Практика: Файловый агент — Код агента
+
+**Структура SGRFileAgent:**
+
+```python
+class SGRFileAgent(SGRToolCallingAgent):
+    """Агент для работы с файловой системой."""
+    
+    def __init__(
+        self,
+        config: AgentConfig,
+        working_directory: str = ".",
+        **kwargs
+    ):
+        super().__init__(config, **kwargs)
+        self.working_directory = Path(working_directory).resolve()
+        
+        # Проверяем и создаем рабочую директорию
+        if not self.working_directory.exists():
+            raise ValueError(
+                f"Working directory does not exist: {self.working_directory}"
+            )
+    
+    async def execute(self, context: AgentContext) -> str:
+        """Выполнение с проверкой безопасности путей."""
+        # Все операции ограничены working_directory
+        # Предотвращаем выход за пределы рабочей директории
+        return await super().execute(context)
+```
+
+**Ключевые особенности:**
+- `working_directory` — рабочая директория агента (ограничение песочницы)
+- Проверка путей — все операции внутри working_directory
+- Наследование от `SGRToolCallingAgent` — SGR пайплайн + тулколлинг
+
+---
+
+## 6.5. Практика: Файловый агент — Конфиг агента
+
+```yaml
+agents:
+  sgr_file_agent:
+    base_class: "sgr_file_agent.SGRFileAgent"
+    working_directory: "."
+    execution:
+      max_iterations: 3
+      max_clarifications: 1
+      logs_dir: "logs/file_agent"
+    tools:
+      - "clarification_tool"
+      - "final_answer_tool"
+      - "get_system_paths_tool"
+      - "list_dir_tool"
+      - "read_file_tool"
+      - "grep_tool"
+      - "find_tool"
+```
+
+---
+
+## 6.6. Практика: Файловый агент — Промпт и workflow
+
+**Пример выполнения запроса "Найди все TODO в проекте":**
+
+1. **reasoning_tool** — анализирует задачу и планирует шаги
+2. **find_tool** — находит файлы проекта
+3. **grep_tool** — ищет TODO-комменты в найденных файлах  
+4. **final_answer_tool** — формирует отчет с результатами
+
+---
+
+## 7. Домашнее задание
+
+**СЛЕВА — Задание 1: Настройка Langfuse**
+
+Цель: настроить трассировку выполнения агентов
+
+Что сделать:
+1. Зарегистрироваться на https://langfuse.com
+2. Получить API-ключи (publicKey, secretKey)
+3. Добавить в config.yaml секцию observability:
+```yaml
+observability:
+  langfuse:
+    enabled: true
+    public_key: "${LANGFUSE_PUBLIC_KEY}"
+    secret_key: "${LANGFUSE_SECRET_KEY}"
+    host: "https://cloud.langfuse.com"
+```
+4. Запустить агента и проверить трейсы в UI
+
+Что проверить: каждый шаг агента виден в трейсах
+
+---
+
+**СПРАВА — Задание 2: ACP интеграция с VS Code**
+
+Цель: подключить файловый агент к VS Code через ACP
+
+Что сделать:
+1. Запустить SGR Agent Core в ACP режиме:
+```bash
+sgracp -c sgr-file-agent/config.yaml
+```
+2. Настроить подключение в VS Code (через расширение с поддержкой ACP)
+3. Проверить команды:
+   - "Найди все TODO в проекте"
+   - "Покажи структуру папки src"
+   - "Прочитай файл README.md"
+
+Что проверить: агент отвечает на запросы из редактора
+
+---
+
+## 8. Завершение и Roadmap
 
 (добавить визуала, в виде роадмапа чарта)
 Резюме: сервер -> модель -> ACP -> тестировать
@@ -362,7 +501,7 @@ Q&A и обсуждение
 
 ---
 
-## Слайд 14. SGR Agent Core — Мастер-класс
+## SGR Agent Core — Мастер-класс
 
 Спасибо за внимание!
 
