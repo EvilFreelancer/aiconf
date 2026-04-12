@@ -20,8 +20,7 @@ pip install sgr-agent-core
 
 ```bash
 cd sgr-file-agent
-mkdir -p tools
-mkdir -p sgr-file-agent/logs
+mkdir -p tools logs
 ```
 
 Целевая структура
@@ -467,9 +466,6 @@ execution:
   max_iterations: 8
   logs_dir: "logs"
 
-acp:
-  agent: sgr_file_agent
-
 tools:
   reasoning_tool: {}
   clarification_tool: {}
@@ -500,12 +496,6 @@ agents:
       - "list_dir_tool"
       - "grep_tool"
       - "find_tool"
-```
-
-### Создание рабочего конфига
-
-```bash
-cp config.yaml.example config.yaml
 ```
 
 ---
@@ -598,33 +588,3 @@ curl -N -X POST "http://localhost:8010/v1/chat/completions" \
 ```bash
 ls -la logs
 ```
-
----
-
-## 10. ACP режим
-
-```bash
-sgracp -c "$(pwd)/config.yaml"
-```
-
----
-
-## 11. Чек-лист готовности
-
-- [ ] Создана папка `sgr-file-agent`
-- [ ] Созданы только 4 кастомных тула
-- [ ] `sgr_file_agent.py` подключает только эти 4 тула
-- [ ] `config.yaml` содержит только эти 4 тула
-- [ ] API сервер поднимается без ошибок
-- [ ] Логи пишутся в `logs`
-- [ ] ACP запуск проходит без ошибок
-
----
-
-## 12. Что улучшить дальше
-
-- добавить read only режим через флаг в конфиге
-- добавить ограничение на размер файла для записи
-- добавить unit тесты для каждого тула
-- добавить e2e тест с запросом к `/v1/chat/completions`
-
