@@ -20,7 +20,7 @@ SGR Agent Core — Мастер-класс
 2. Архитектура
 3. YAML-конфигурации
 4. Что нужно для старта
-5. Практика - Deep Research - Roadmap
+5. Практика - Deep Research
 6. Практика - Файловый агент
 7. Домашнее задание
 8. Завершение
@@ -36,11 +36,11 @@ SGR Agent Core — Мастер-класс
  
 Материалы:
 - https://github.com/vamplabai/sgr-agent-core
+- https://github.com/EvilFreelancer/aiconf
  
 По итогу получим:
+- локальный Deep Research агент
 - локальный файловый агент
-- HTTP API
-- ACP интегрированный в Obsidian
 
 ---
 
@@ -117,7 +117,8 @@ FastAPI сервер с хранилищем агентов
 - `run_command_tool` — выполнение shell-команд (safe/unsafe режимы)
 
 **Типы агентов:**
-- `sgr_agent` / `sgr_tool_calling_agent` — полный SGR пайплайн с reasoning
+- `sgr_agent` - максимально строгий и управляемый SGR
+- `sgr_tool_calling_agent` - SGR-логика плюс нативный tool calling с большей совместимостью и отказоустойчивостью
 - `tool_calling_agent` — агент с тулколлингом, без SGR
 - `dialog_agent` — диалоговый агент с промежуточными результатами
 - `iron_agent` — упрощенный агент без tool calling
@@ -128,25 +129,11 @@ FastAPI сервер с хранилищем агентов
 
 Наследование настроек (приоритет снизу вверх):
 
-```
-defaults (в коде)  ← базовые значения
-     ↓
-envы               ← переменные окружения
-     ↓
-config.yaml        ← файл конфигурации
-     ↓
-CLI args           ← аргументы командной строки
-```
+![](assets/yaml-config-priority.png)
 
 Структура YAML-файла:
-```
-llm:              # настройки LLM
-execution:        # лимиты и директории
-tools:            # регистрация тулов
-mcp:              # MCP серверы
-agents:           # определение агентов
-acp:              # ACP настройки
-```
+
+![](assets/yaml-config-structure.png)
 
 ---
 
@@ -163,7 +150,7 @@ tools:
   # С конфигурацией
   web_search_tool:
     engine: "tavily"
-    api_key: "${TAVILY_API_KEY}"
+    api_key: "tavily_api_key"
     max_results: 10
   
   # Кастомный тул из модуля
@@ -300,7 +287,7 @@ llm:
 
 ---
 
-## 5. Практика: Deep Research — Roadmap
+## 5. Практика: Deep Research
 
 **СЛЕВА — Что делаем (пошагово):**
 
@@ -311,6 +298,25 @@ llm:
 ![](assets/52.png)
 
 Цель практики — запустить рабочий Deep Research агент из пакета sgr-agent-core
+
+---
+
+## 5.1. Команды и Jupyter notebook
+
+Команды для практики:
+
+```bash
+git clone https://github.com/vamplabai/sgr-agent-core.git
+cd sgr-agent-core
+pip install -e .
+cd examples/sgr_deep_research
+cp config.yaml.example config.yaml
+sgr -c config.yaml
+```
+
+Jupyter notebook с теми же шагами:
+
+https://github.com/EvilFreelancer/aiconf/blob/main/practice-01-deep-research.ipynb
 
 ---
 
@@ -492,35 +498,16 @@ sgracp -c sgr-file-agent/config.yaml
 
 ## 8. Завершение
 
-**СЛЕВА — Q&A и ресурсы**
-
-**Что обсудим:**
+Секция Q&A:
 - Вопросы по материалам мастер-класса
 - Сложности при настройке окружения
 - Идеи для собственных агентов
 
-**Ресурсы:**
+Ресурсы:
+- Блокноты: https://github.com/EvilFreelancer/aiconf
 - Репозиторий: https://github.com/vamplabai/sgr-agent-core
 - Документация: https://vamplabai.github.io/sgr-agent-core/
-- API для мастер-класса: https://api.rpa.icu (телеграм @evilfreelancer)
-
-**СПРАВА — Шпаргалка по командам**
-```bash
-# Клонирование
-git clone https://github.com/vamplabai/sgr-agent-core.git
-
-# Установка
-cd sgr-agent-core && pip install -e .
-
-# Подготовка конфигурации
-cd examples/sgr_deep_research
-cp config.yaml.example config.yaml
-# отредактируй config.yaml
-
-# Запуск OpenAI-совместимого API
-sgr -c config.yaml
-```
-
+- Мой телеграм: https://t.me/evilfreelancer
 
 ---
 
