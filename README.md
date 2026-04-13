@@ -1,4 +1,4 @@
-# SGR Agent Core мастер-класс - AI Conf
+# SGR Agent Core мастер-класс - AI Conf 2026
 
 Этот репозиторий содержит материалы мастер-класса по `sgr-agent-core`
 
