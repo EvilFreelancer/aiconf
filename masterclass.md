@@ -2,517 +2,542 @@
 
 _Автоматическая конвертация из PPTX в Markdown._
 
-- Исходный файл: `sgr-conference-masterclass.pptx`
-- Слайдов: 14
+- Исходный файл: `masterclass.pptx`
+- Слайдов: 27
 
 ---
 
-## Рыков Павел — Росгосстрах
+## Слайд 1
 
-SGR Agent Core — Мастер-класс
+Рыков Павел Росгосстрах
+
+SGR Agent Core Мастер-класс
+
+![](assets/pptx-slide-01-img-01.png)
 
 ---
 
-## Программа мастер-класса
+## Слайд 2
+
+Программа мастер-класса
 
 0. Вступление
+
 1. Что такое SGR Agent Core
+
 2. Архитектура
+
 3. YAML-конфигурации
+
 4. Что нужно для старта
+
 5. Практика - Deep Research
+
 6. Практика - Файловый агент
+
 7. Домашнее задание
+
 8. Завершение
 
 ---
 
-## 0. Вступление
+## Слайд 3
+
+0. Вступление
 
 Что понадобится:
+
 - Python 3.11+ и/или Docker
+
 - Git
-- API-ключ с моделью поддерживающей Sturctured Output
- 
-Материалы:
-- https://github.com/vamplabai/sgr-agent-core
-- https://github.com/EvilFreelancer/aiconf
- 
+
+- API-ключ с моделью поддерживающей Structured Output или Tool Calling
+
+Ресурсы:
+
+- Блокноты: https://github.com/vamplabai/sgr-agent-core
+
+- Репозиторий: https://github.com/EvilFreelancer/aiconf
+
+- Документация: https://vamplabai.github.io/sgr-agent-core/
+
 По итогу получим:
+
 - локальный Deep Research агент
+
 - локальный файловый агент
 
 ---
 
-## 1. Что такое SGR Agent Core
+## Слайд 4
 
-![](assets/1.png)
+1. Что такое SGR Agent Core
+
+![](assets/pptx-slide-04-img-02.png)
 
 ---
 
-## 2. Архитектура
+## Слайд 5
+
+2. Архитектура
 
 SGR Agent Core работает в двух режимах
 
-**API Mode** — HTTP сервер для интеграций
+API Mode — HTTP сервер для интеграций
+
 - OpenAI-совместимый эндпоинт /v1/chat/completions
+
 - Интеграции: Open WebUI, LibreChat, любой OpenAI-клиент
+
 - Stateless (без состояния) и Stateful (с сессиями)
 
-**ACP Mode** — Agent Client Protocol
+ACP Mode — Agent Client Protocol
+
 - Stdio transport для локальных агентов
+
 - Интеграции: Obsidian, Claude Desktop, любой ACP-хост
+
 - Stateless-only, контекст через threads
 
 ---
 
-## 2.1. ACP Mode — Agent Client Protocol
+## Слайд 6
+
+2.1. Agent Client Protocol (ACP)
 
 Что такое ACP:
+
 - Протокол для локальных агентов (stdio transport)
+
 - Агент запускается как подпроцесс, общается через JSON-RPC
+
 - Поддержка tools, resources, prompts
 
 Интеграции:
+
 - Obsidian + Copilot plugin
+
 - Claude Desktop
+
 - Cursor и другие IDE
 
-QR-код на спецификацию ACP
-[QR: https://spec.modelcontextprotocol.io/]
+https://github.com/agentclientprotocol/agent-client-protocol
 
 ---
 
-## 2.2. API Mode — REST сервер
+## Слайд 7
+
+2.2. API Mode — REST сервер
 
 FastAPI сервер с хранилищем агентов
 
 Жизненный цикл агента:
+
 1. Создание — загрузка конфига, инициализация тулов
+
 2. Выполнение — обработка запроса, SGR пайплайн
+
 3. Очистка — освобождение ресурсов
 
 Режимы работы:
+
 - Stateless — каждый запрос независимый
+
 - Stateful — сохраняется контекст диалога
 
 Интеграции:
+
 - Open WebUI, LibreChat, ChatGPT-Next-Web
+
 - Любой клиент с OpenAI-compatible API
 
 ---
 
-## 2.3. Таксономия — Тулы и Агенты
+## Слайд 8
 
-**Системные тулы:**
+2.3. Системные тулы
+
 - `reasoning_tool` — анализ ситуации и планирование следующего шага
+
 - `generate_plan_tool` — генерация исследовательского плана
+
 - `adapt_plan_tool` — адаптация плана на основе новых данных
+
 - `clarification_tool` — запрос уточнения при неоднозначности
+
 - `final_answer_tool` — финализация задачи с ответом агента
+
 - `answer_tool` — промежуточный ответ с продолжением диалога
+
 - `web_search_tool` — поиск (Tavily, Brave, Perplexity)
+
 - `extract_page_content_tool` — извлечение контента из URL
+
 - `create_report_tool` — создание файла-отчета с цитированием
+
 - `run_command_tool` — выполнение shell-команд (safe/unsafe режимы)
 
-**Типы агентов:**
+---
+
+## Слайд 9
+
+2.4. Встроенные агенты
+
 - `sgr_agent` - максимально строгий и управляемый SGR
+
 - `sgr_tool_calling_agent` - SGR-логика плюс нативный tool calling с большей совместимостью и отказоустойчивостью
+
 - `tool_calling_agent` — агент с тулколлингом, без SGR
+
 - `dialog_agent` — диалоговый агент с промежуточными результатами
+
 - `iron_agent` — упрощенный агент без tool calling
 
 ---
 
-## 3. YAML-конфигурации
+## Слайд 10
 
-Наследование настроек (приоритет снизу вверх):
+3. YAML-конфигурация
 
-![](assets/yaml-config-priority.png)
+![](assets/pptx-slide-10-img-03.png)
 
-Структура YAML-файла:
+Приоритет
 
-![](assets/yaml-config-structure.png)
+4. Дефолты фреймворка
 
----
+3. Переменные окружения
 
-## 3.1. Регистрация тулов
+2. Конфигурация
 
-Схема определения тулов в конфиге:
-
-```
-tools:
-  # Простая регистрация (только base_class)
-  reasoning_tool: {}
-  final_answer_tool: {}
-  
-  # С конфигурацией
-  web_search_tool:
-    engine: "tavily"
-    api_key: "tavily_api_key"
-    max_results: 10
-  
-  # Кастомный тул из модуля
-  read_file_tool:
-    base_class: "tools.ReadFileTool"
-```
-
-Тулы подключаются к агенту по имени:
-```
-agent:
-  tools:
-    - "web_search_tool"
-    - "extract_page_content_tool"
-    - "create_report_tool"
-```
+1. Параметры CLI
 
 ---
 
-## 3.2. MCP интеграция
+## Слайд 11
 
-MCP (Model Context Protocol) — внешние серверы с тулами:
+3.1. Реестр тулов
 
-```
-mcp:
-  mcpServers:
-    # Пример: DeepWiki MCP сервер
-    deepwiki:
-      url: "https://mcp.deepwiki.com/mcp"
-    
-    # Локальный stdio сервер
-    filesystem:
-      command: "npx"
-      args: ["-y", "@modelcontextprotocol/server-filesystem"]
-```
-
-Агент автоматически получает тулы от MCP серверов.
+![](assets/pptx-slide-11-img-04.png)
 
 ---
 
-## 3.3. Определение агентов
+## Слайд 12
 
-Схема определения агента:
+3.2. Реестр MCP-серверов
 
-```
-agents:
-  sgr_tool_calling_agent:
-    base_class: "agents.ResearchSGRToolCallingAgent"
-    llm:
-      model: "gpt-4.1-mini"
-      temperature: 0.4
-    tools:
-      - "web_search_tool"
-      - "extract_page_content_tool"
-      - "reasoning_tool"
-      - "create_report_tool"
-      - "final_answer_tool"
-```
-
-Выбор агента для ACP:
-```
-acp:
-  agent: sgr_tool_calling_agent
-```
+![](assets/pptx-slide-12-img-05.png)
 
 ---
 
-## 3.4. Архитектура — связь компонентов
+## Слайд 13
 
-Общая схема взаимодействия:
+3.3. Реестр агентов
 
-![](assets/3.png)
+![](assets/pptx-slide-13-img-06.png)
 
-**Агент** содержит SGR Pipeline с тремя фазами:
+---
+
+## Слайд 14
+
+3.4. Cвязь компонентов
+
+Агент содержит SGR Pipeline с тремя фазами:
+
 - Reasoning Tool — анализ и выбор стратегии
+
 - Planning Tool — построение плана
+
 - Acting Tools — выполнение действий через тулы
 
-**Tools Layer** — регистрированные в конфиге тулы
+Tools Layer — зарегистрированные в конфиге тулы
 
-**MCP Servers** — внешние серверы с дополнительными тулами
+MCP Servers — внешние серверы с дополнительными тулами
+
+![](assets/pptx-slide-14-img-07.png)
 
 ---
 
-## 4. Что нужно для старта
+## Слайд 15
 
-**Шаг 1 — Окружение:**
-- Python 3.11+ или Docker
+4. Что нужно для старта
+
+Шаг 1 — Окружение:
+
+- Python 3.11+
+
 - Git для клонирования примеров
 
-**Шаг 2 — API-ключи:**
-- OpenAI-совместимый API (обязательно)
-- Tavily API key (опционально, для Deep Research)
+Шаг 2 — API-ключи:
 
-**Шаг 3 — Конфигурация:**
+- OpenAI-совместимый API (обязательно)
+
+- Tavily API key (для Deep Research)
+
+Шаг 3 — Конфигурация:
+
 - Скопировать config.yaml.example → config.yaml
+
 - Прописать ключи в секции llm: и tools:
 
 ---
 
-## 4.1. Установка
+## Слайд 16
 
-```bash
+4.1. Установка
+
 git clone https://github.com/vamplabai/sgr-agent-core.git
+
 cd sgr-agent-core
+
+python3 -m venv .venv
+
+. .venv/bin/activate
+
 pip install -e .
-```
 
 ---
 
-## 4.2. Токены и где их взять
+## Слайд 17
 
-**OpenAI-совместимый API:**
+4.2. Токены и где их взять
+
+OpenAI-совместимый API:
+
 - OpenAI: https://platform.openai.com/api-keys
+
 - Другие провайдеры с OpenAI-compatible API
 
-**Tavily (для поиска):**
+Tavily (для поиска):
+
 - https://tavily.com — 1000 запросов/месяц бесплатно
 
-**Альтернативный вариант для мастер-класса:**
+Альтернативный вариант для мастер-класса:
+
 - API: https://api.rpa.icu
+
 - Ключ: https://t.me/evilfreelancer
-- Модель: gpt-oss:120b
+
+- Модель: gpt-oss:120b (ограничение, не более 20 человек)
 
 ---
 
-## 4.3. Пример настройки LLM для api.rpa.icu
+## Слайд 18
 
-```yaml
-llm:
-  base_url: "https://api.rpa.icu/v1"
-  api_key: "https://t.me/evilfreelancer"
-  model: "gpt-oss:120b"
-```
+4.3. Пример через api.rpa.icu
+
+![](assets/pptx-slide-18-img-08.png)
 
 ---
 
-## 5. Практика: Deep Research
+## Слайд 19
 
-**СЛЕВА — Что делаем (пошагово):**
+5. Практика: Deep Research
 
-![](assets/51.png)
+Что делаем:
 
-**СПРАВА — Что получим в итоге:**
+1. Клонируем репозиторий sgr-agent-core
 
-![](assets/52.png)
+2. Устанавливаем pip install -e .
 
-Цель практики — запустить рабочий Deep Research агент из пакета sgr-agent-core
+3. Переходим в examples/sgr_deep_research
+
+4. Копируем config.yaml.example -> config.yaml
+
+5. Прописываем API-ключи в конфиг
+
+6. Запускаем сервер sgr -c config.yaml
+
+7. Проверяем через curl или Swagger UI
+
+Что получим в итоге:
+
+![](assets/pptx-slide-19-img-09.png)
 
 ---
 
-## 5.1. Команды и Jupyter notebook
+## Слайд 20
+
+5.1. Команды и Jupyter notebook
 
 Команды для практики:
 
-```bash
 git clone https://github.com/vamplabai/sgr-agent-core.git
-cd sgr-agent-core
-pip install -e .
-cd examples/sgr_deep_research
-cp config.yaml.example config.yaml
-sgr -c config.yaml
-```
 
-Jupyter notebook с теми же шагами:
+cd sgr-agent-core
+
+pip install -e .
+
+cd examples/sgr_deep_research
+
+cp config.yaml.example config.yaml
+
+sgr -c config.yaml
+
+Jupyter notebook с шагами:
 
 https://github.com/EvilFreelancer/aiconf/blob/main/practice-01-deep-research.ipynb
 
 ---
 
-## SGR Agent Core — Мастер-класс
+## Слайд 21
+
+SGR Agent Core Мастер-класс
 
 Перерыв 10-15 минут
 
----
-
-
-##  6. Практика: Файловый агент
-
-**СЛЕВА — Пошаговый план:**
-
-![](assets/61.png)
-
-**СПРАВА — Что получим:**
-
-![](assets/62.png)
-
-Цель практики — создать рабочий файловый агент на базе пакета sgr-agent-core
+А дальше…. Делаем файловый агент своми руками
 
 ---
 
-##  6.1. Практика: Файловый агент — Тулы
+## Слайд 22
 
-**Базовые тулы для работы с файлами:**
+6. Практика: Файловый агент
 
-| Тул | Назначение | Параметры |
-|-----|-----------|-----------|
-| `read_file_tool` | Чтение содержимого файла | `file_path`, `offset`, `limit` |
-| `write_file_tool` | Запись/дозапись в файл | `file_path`, `content` |
-| `list_dir_tool` | Список файлов в директории | `dir_path`, `recursive` |
-| `grep_tool` | Поиск по содержимому файла | `pattern`, `file_path` |
-| `find_tool` | Быстрый поиск файлов по имени | `pattern`, `dir_path` |
+Что делаем:
 
----
+1. Пишем файловые тулы `read, search, list`
 
-##  6.2. Практика: Файловый агент — Конфиг тулов
+3. Создаем `SGRFileAgent` с тулкитом
 
-```yaml
-tools:
-  # Системные тулы
-  clarification_tool: {}
-  final_answer_tool: {}
-  
-  # Файловые тулы (кастомные)
-  read_file_tool:
-    base_class: "tools.ReadFileTool"
-  write_file_tool:
-    base_class: "tools.WriteFileTool"
-  list_dir_tool:
-    base_class: "tools.ListDirTool"
-  grep_tool:
-    base_class: "tools.GrepTool"
-  find_tool:
-    base_class: "tools.FindTool"
-```
+2. Регистрируем тулы в `config.yaml`
 
-Каждый тул наследуется от `BaseTool` и определяет:
-- Pydantic-модель входных параметров
-- Метод `__call__` с логикой выполнения
+4. Запускаем `sgr -c config.yaml`
+
+5. Тестируем через curl
+
+Что получим в итоге:
+
+![](assets/pptx-slide-22-img-10.png)
 
 ---
 
-## 6.3. Практика: Файловый агент — Код агента
+## Слайд 23
 
-**Структура SGRFileAgent:**
+6.1. Команды и Jupyter notebook
 
-```python
-class SGRFileAgent(SGRToolCallingAgent):
-    """Агент для работы с файловой системой."""
-    
-    def __init__(
-        self,
-        config: AgentConfig,
-        working_directory: str = ".",
-        **kwargs
-    ):
-        super().__init__(config, **kwargs)
-        self.working_directory = Path(working_directory).resolve()
-        
-        # Проверяем и создаем рабочую директорию
-        if not self.working_directory.exists():
-            raise ValueError(
-                f"Working directory does not exist: {self.working_directory}"
-            )
-    
-    async def execute(self, context: AgentContext) -> str:
-        """Выполнение с проверкой безопасности путей."""
-        # Все операции ограничены working_directory
-        # Предотвращаем выход за пределы рабочей директории
-        return await super().execute(context)
-```
+Команды для практики:
 
-**Ключевые особенности:**
-- `working_directory` — рабочая директория агента (ограничение песочницы)
-- Проверка путей — все операции внутри working_directory
-- Наследование от `SGRToolCallingAgent` — SGR пайплайн + тулколлинг
+pip install sgr-agent-core openai pydantic
+
+mkdir -pv sgr-file-agent/{tools,logs}
+
+cd sgr-file-agent
+
+# создадим код тулов и агента, а так же конфигурацию
+
+sgr -c config.yaml
+
+Jupyter notebook с шагами:
+
+https://github.com/EvilFreelancer/aiconf/blob/main/practice-02-file-agent.ipynb
 
 ---
 
-## 6.4. Практика: Файловый агент — Конфиг агента
+## Слайд 24
 
-```yaml
-agents:
-  sgr_file_agent:
-    base_class: "sgr_file_agent.SGRFileAgent"
-    working_directory: "."
-    execution:
-      max_iterations: 3
-      max_clarifications: 1
-      logs_dir: "logs/file_agent"
-    tools:
-      - "clarification_tool"
-      - "final_answer_tool"
-      - "get_system_paths_tool"
-      - "list_dir_tool"
-      - "read_file_tool"
-      - "grep_tool"
-      - "find_tool"
-```
+6.2. Варианты использования
+
+**Примеры UI и чат-клиентов под OpenAI-compatible API**
+
+- [Open WebUI](https://github.com/open-webui/open-webui) - локальный веб-интерфейс, гибкая настройка провайдеров
+- [LibreChat](https://github.com/danny-avila/LibreChat) - мульти-модельный чат с плагинами и агентами
+- [Continue](https://github.com/continuedev/continue) - ассистент в IDE с поддержкой нескольких провайдеров
+- Любые обёртки и SDK, которые умеют `OPENAI_BASE_URL` (скрипты, мобильные клиенты, собственные бэкенды)
+
+**Примеры cвязка с UI через ACP**
+
+- [Zed](https://zed.dev/acp) - нативная панель агента, документация по `agent_servers`
+- [JetBrains IDE](https://zed.dev/acp) - в экосистеме ACP (совместная работа JetBrains и Zed над протоколом)
+- [VS Code](https://github.com/formulahendry/vscode-acp) - расширение ACP Client (Marketplace - `formulahendry.acp-client`), пресеты для Codex CLI, Claude Code, Gemini CLI и др.
+- [Obsidian](https://zed.dev/acp/editor/obsidian) - плагин Agent Client, работа с заметками и терминалом из хранилища
+
 
 ---
 
-## 6.5. Практика: Файловый агент — Промпт и workflow
+## Слайд 25
 
-**Пример выполнения запроса "Найди все TODO в проекте":**
-
-1. **reasoning_tool** — анализирует задачу и планирует шаги
-2. **find_tool** — находит файлы проекта
-3. **grep_tool** — ищет TODO-комменты в найденных файлах  
-4. **final_answer_tool** — формирует отчет с результатами
-
----
-
-## 7. Домашнее задание
-
-**СЛЕВА — Задание 1: Настройка Langfuse**
+7. Домашнее задание
 
 Цель: настроить трассировку выполнения агентов
 
-Что сделать:
-1. Зарегистрироваться на https://langfuse.com
+Что сделать:1. Зарегистрироваться на https://langfuse.com
+
 2. Получить API-ключи (publicKey, secretKey)
+
 3. Добавить в config.yaml секцию observability:
-```yaml
+
 observability:
-  langfuse:
-    enabled: true
-    public_key: "${LANGFUSE_PUBLIC_KEY}"
-    secret_key: "${LANGFUSE_SECRET_KEY}"
-    host: "https://cloud.langfuse.com"
-```
+
+langfuse:
+
+enabled: true
+
+public_key: "${LANGFUSE_PUBLIC_KEY}"
+
+secret_key: "${LANGFUSE_SECRET_KEY}"
+
+host: "https://cloud.langfuse.com"
+
 4. Запустить агента и проверить трейсы в UI
 
 Что проверить: каждый шаг агента виден в трейсах
 
----
-
-**СПРАВА — Задание 2: ACP интеграция с VS Code**
-
 Цель: подключить файловый агент к VS Code через ACP
 
 Что сделать:
+
 1. Запустить SGR Agent Core в ACP режиме:
-```bash
+
 sgracp -c sgr-file-agent/config.yaml
-```
+
 2. Настроить подключение в VS Code (через расширение с поддержкой ACP)
+
 3. Проверить команды:
-   - "Найди все TODO в проекте"
-   - "Покажи структуру папки src"
-   - "Прочитай файл README.md"
+
+- "Найди все TODO в проекте"
+
+- "Покажи структуру папки src"
+
+- "Прочитай файл README.md"
 
 Что проверить: агент отвечает на запросы из редактора
 
 ---
 
-## 8. Завершение
+## Слайд 26
+
+8. Завершение
 
 Секция Q&A:
+
 - Вопросы по материалам мастер-класса
+
 - Сложности при настройке окружения
+
 - Идеи для собственных агентов
 
 Ресурсы:
+
 - Блокноты: https://github.com/EvilFreelancer/aiconf
+
 - Репозиторий: https://github.com/vamplabai/sgr-agent-core
+
 - Документация: https://vamplabai.github.io/sgr-agent-core/
+
 - Мой телеграм: https://t.me/evilfreelancer
 
 ---
 
-## SGR Agent Core — Мастер-класс
+## Слайд 27
+
+SGR Agent Core Мастер-класс
 
 Спасибо за внимание!
+
+![](assets/pptx-slide-27-img-11.png)
+
+![](assets/pptx-slide-27-img-12.png)
+
+![](assets/pptx-slide-27-img-13.png)
 
 ---
