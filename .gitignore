@@ -8,3 +8,4 @@ sgr-agent-core
 sgr-agent-core/
 .~lock*
 sgr-file-agent/
+sgr-file-agent.bak/
